@@ -1,0 +1,7 @@
+import d from"node:readline/promises";import{stdin as w,stdout as h}from"node:process";import u from"bcryptjs";import c from"pg";import m from"dotenv";m.config();var{Pool:l}=c,r=new l({connectionString:process.env.DATABASE_URL});var o=d.createInterface({input:w,output:h});async function f(){try{console.log(`
+=================================`),console.log(" CADASTRO DO ADMINISTRADOR"),console.log(" EMYGERFSON NOTICIAS"),console.log(`=================================
+`);let e=(await o.question("Nome completo: ")).trim(),n=(await o.question("E-mail: ")).trim().toLowerCase(),s=await o.question("Senha (m\xEDnimo 12 caracteres): "),t=await o.question("Confirme a senha: ");if(e.length<3)throw new Error("O nome precisa ter pelo menos 3 caracteres.");if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(n))throw new Error("Informe um endere\xE7o de e-mail v\xE1lido.");if(s.length<12)throw new Error("A senha precisa ter pelo menos 12 caracteres.");if(s!==t)throw new Error("As senhas n\xE3o s\xE3o iguais.");if((await r.query("SELECT id FROM admins WHERE email = $1",[n])).rows.length>0)throw new Error("J\xE1 existe um administrador com esse e-mail.");let a=await u.hash(s,12),i=await r.query(`INSERT INTO admins (nome, email, senha_hash)
+       VALUES ($1, $2, $3)
+       RETURNING id, nome, email, criado_em`,[e,n,a]);console.log(`
+Administrador criado com sucesso!`),console.log(i.rows[0])}catch(e){console.error(`
+N\xE3o foi poss\xEDvel criar o administrador:`),console.error(e.message)}finally{o.close(),await r.end()}}f();
