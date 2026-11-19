@@ -26,6 +26,9 @@ dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3333;
+const emProducao = process.env.NODE_ENV === "production";
+
+app.set("trust proxy", 1);
 
 // Caminho da pasta de uploads.
 const __filename = fileURLToPath(import.meta.url);
@@ -41,14 +44,17 @@ app.use(helmet());
 
 // Permite que o frontend carregue imagens hospedadas na API.
 app.use("/uploads", (req, res, next) => {
-    res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
-    next();
+  res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
+  next();
 }, express.static(pastaUploads));
 
 // Permite que o frontend acesse a API.
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL,
+    origin: [
+      process.env.FRONTEND_URL,
+      "https://emygerfson-noticias.infinityfree.io",
+    ].filter(Boolean),
     credentials: true,
   })
 );
@@ -85,8 +91,8 @@ app.use(
 
     cookie: {
       httpOnly: true,
-      secure: false,
-      sameSite: "lax",
+      secure: emProducao,
+      sameSite: emProducao ? "none" : "lax",
       maxAge: 1000 * 60 * 60 * 8,
       path: "/",
     },
