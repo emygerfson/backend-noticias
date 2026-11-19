@@ -93,6 +93,7 @@ app.use(
     cookie: {
       httpOnly: true,
       secure: emProducao,
+      partitioned: emProducao,
       sameSite: emProducao ? "none" : "lax",
       maxAge: 1000 * 60 * 60 * 8,
       path: "/",

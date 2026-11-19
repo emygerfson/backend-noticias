@@ -139,6 +139,7 @@ export function logout(req, res) {
     res.clearCookie("connect.sid", {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
+      partitioned: process.env.NODE_ENV === "production",
       sameSite: "lax",
       path: "/",
     });
