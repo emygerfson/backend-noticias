@@ -169,12 +169,12 @@ export async function atualizarNoticia(req, res) {
            fonte = $6,
            status = $7,
            publicada_em = CASE
-             WHEN $7 = 'publicada'
+             WHEN $7::varchar = 'publicada'
                THEN COALESCE(publicada_em, CURRENT_TIMESTAMP)
              ELSE NULL
            END,
            atualizado_em = CURRENT_TIMESTAMP
-       WHERE id = $8
+       WHERE id = $8::integer
        RETURNING *`,
       [
         dados.titulo,
@@ -184,7 +184,7 @@ export async function atualizarNoticia(req, res) {
         dados.imagem_url || null,
         dados.fonte || null,
         dados.status || "rascunho",
-        id
+        Number(id)
       ]
     );
 
@@ -207,9 +207,10 @@ export async function atualizarNoticia(req, res) {
       });
     }
 
-    console.error(erro);
+    console.error("Erro ao atualizar notícia:", erro);
     return res.status(500).json({
-      mensagem: "Erro ao atualizar notícia."
+      mensagem: "Erro ao atualizar notícia.",
+      detalhe: erro.message
     });
   }
 }
@@ -236,14 +237,14 @@ export async function alterarStatusNoticia(req, res) {
       `UPDATE noticias
        SET status = $1,
            publicada_em = CASE
-             WHEN $1 = 'publicada'
+             WHEN $1::varchar = 'publicada'
                THEN COALESCE(publicada_em, CURRENT_TIMESTAMP)
              ELSE NULL
            END,
            atualizado_em = CURRENT_TIMESTAMP
-       WHERE id = $2
+       WHERE id = $2::integer
        RETURNING *`,
-      [status, id]
+      [status, Number(id)]
     );
 
     if (resultado.rows.length === 0) {
@@ -258,9 +259,10 @@ export async function alterarStatusNoticia(req, res) {
     });
 
   } catch (erro) {
-    console.error(erro);
+    console.error("Erro ao alterar status:", erro);
     return res.status(500).json({
-      mensagem: "Erro ao alterar status."
+      mensagem: "Erro ao alterar status.",
+      detalhe: erro.message
     });
   }
 }
@@ -315,6 +317,7 @@ export async function buscarImagemPublica(req, res) {
     const imagem = resultado.rows[0];
     res.setHeader("Content-Type", imagem.mime_type);
     res.setHeader("Cache-Control", "public, max-age=86400");
+    res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
     return res.send(imagem.dados);
 
   } catch (erro) {
