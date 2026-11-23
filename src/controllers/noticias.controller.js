@@ -270,8 +270,8 @@ export async function alterarStatusNoticia(req, res) {
 // =====================================
 
 export async function listarNoticiasPublicas(req, res) {
-    try {
-        const resultado = await pool.query(`
+  try {
+    const resultado = await pool.query(`
             SELECT
                 id,
                 titulo,
@@ -287,15 +287,40 @@ export async function listarNoticiasPublicas(req, res) {
             ORDER BY publicada_em DESC NULLS LAST
         `);
 
-        return res.json(resultado.rows);
+    return res.json(resultado.rows);
 
-    } catch (erro) {
-        console.error("Erro ao listar notícias públicas:", erro);
+  } catch (erro) {
+    console.error("Erro ao listar notícias públicas:", erro);
 
-        return res.status(500).json({
-            mensagem: "Não foi possível carregar as notícias."
-        });
+    return res.status(500).json({
+      mensagem: "Não foi possível carregar as notícias."
+    });
+  }
+}
+
+// SERVIR IMAGEM PERSISTIDA NO POSTGRESQL
+export async function buscarImagemPublica(req, res) {
+  try {
+    const resultado = await pool.query(
+      `SELECT mime_type, dados
+             FROM noticias_imagens
+             WHERE nome = $1`,
+      [req.params.nome]
+    );
+
+    if (resultado.rows.length === 0) {
+      return res.status(404).send("Imagem não encontrada.");
     }
+
+    const imagem = resultado.rows[0];
+    res.setHeader("Content-Type", imagem.mime_type);
+    res.setHeader("Cache-Control", "public, max-age=86400");
+    return res.send(imagem.dados);
+
+  } catch (erro) {
+    console.error("Erro ao carregar imagem da notícia:", erro);
+    return res.status(500).send("Não foi possível carregar a imagem.");
+  }
 }
 
 // =====================================
@@ -303,11 +328,11 @@ export async function listarNoticiasPublicas(req, res) {
 // =====================================
 
 export async function buscarNoticiaPublica(req, res) {
-    try {
-        const { slug } = req.params;
+  try {
+    const { slug } = req.params;
 
-        const resultado = await pool.query(
-            `SELECT
+    const resultado = await pool.query(
+      `SELECT
                 id,
                 titulo,
                 slug,
@@ -320,22 +345,22 @@ export async function buscarNoticiaPublica(req, res) {
              FROM noticias
              WHERE slug = $1
              AND status = 'publicada'`,
-            [slug]
-        );
+      [slug]
+    );
 
-        if (resultado.rows.length === 0) {
-            return res.status(404).json({
-                mensagem: "Notícia não encontrada."
-            });
-        }
-
-        return res.json(resultado.rows[0]);
-
-    } catch (erro) {
-        console.error("Erro ao buscar notícia pública:", erro);
-
-        return res.status(500).json({
-            mensagem: "Não foi possível carregar a notícia."
-        });
+    if (resultado.rows.length === 0) {
+      return res.status(404).json({
+        mensagem: "Notícia não encontrada."
+      });
     }
+
+    return res.json(resultado.rows[0]);
+
+  } catch (erro) {
+    console.error("Erro ao buscar notícia pública:", erro);
+
+    return res.status(500).json({
+      mensagem: "Não foi possível carregar a notícia."
+    });
+  }
 }
